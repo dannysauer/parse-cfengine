@@ -1,10 +1,8 @@
-#!/usr/bin/perl
 ################################################################################
 # $Id:$
 # CFEngine parser
 ################################################################################
-#use strict;
-use warnings;
+package Parse::CFEngine;
 use IO::File;
 use Parse::RecDescent;
 
