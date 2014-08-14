@@ -3,5 +3,5 @@
 use warnings;
 use strict;
 
-use lib q{/home/sauer/dev/humpysvn/perl/lib};
+use lib q{/home/sauer/dev/parse-cfengine/lib};
 use Parse::CFEngine;
