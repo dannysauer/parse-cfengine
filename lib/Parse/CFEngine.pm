@@ -18,7 +18,6 @@ our %EXPORT_TAGS = (
   pie     => [ qw/&pie1 &yak2/ ],
 );
 
-
 #$::RD_HINT++;
 #$::RD_WARN++;
 #$::RD_TRACE++;
@@ -132,7 +131,21 @@ END_OF_GRAMMAR
 my $parser;
 $parser = Parse::RecDescent->new($grammar);
 
+sub new {
+    my $class = shift;
+    #my ($file) = @_;
+
+    my $self = bless {
+        #file   => $file,
+        tree   => undef,
+        parser => \$parser,
+    }, $class;
+
+    return $self;
+}
+
 sub parse_file{
+  my $self = shift;
   my ($file) = @_;
   my $t;
   my $f = IO::File->new($file)
@@ -145,6 +158,9 @@ sub parse_file{
   ) ){
     die qq{Failed parsing.\n};
   }
+
+  $self->{tree} = $t;
+  return $self->{tree};
 
   #if (my $t = $parser->cfengine( q!
   #    bundle agent kapow { type: "a" b=>c;
@@ -170,15 +186,16 @@ sub parse_file{
 my $indent = q{ }x3; # indent sequence (You "can" use tab, but I suggest spaces)
 my $level = 0;       # initial number of indents
 
-my $path = shift
-  or die qq{Usage: $0 filename\n};
-my $tree = parse_file( $path );
+#my $tree = parse_file( $path );
+
+sub junk {
+    my $self = shift;
 
 use Data::Dumper;
-#  print Dumper $tree->{'block(s)'}, "\n";
+#  print Dumper $self->{tree}->{'block(s)'}, "\n";
 #  exit;
-#  print join( q{, }, keys(%{$tree->{'block(s)'}}) ), "\n";
-foreach( @{$tree->{'block(s)'}} ){
+#  print join( q{, }, keys(%{$self->{tree}->{'block(s)'}}) ), "\n";
+foreach( @{$self->{tree}->{'block(s)'}} ){
   if($_->{bundle}){
     print $_->{typeid}->{__VALUE__}, " bundle named ", $_->{blockid}->{__VALUE__}, "\n";
     my $body = $_->{bundlebody}->{'statement(s)'};
@@ -308,5 +325,8 @@ sub formatsub {
   }
 }
 
+} #junk
+
 1;
+# vim:sw=2 ts=4 et
 # end Parse::CFEngine
