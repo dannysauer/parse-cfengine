@@ -23,10 +23,6 @@ our %EXPORT_TAGS = (
 #$::RD_WARN++;
 #$::RD_TRACE++;
 
-my $indent = q{ }x3; # indent sequence (You "can" use tab, but I suggest spaces)
-my $level = 0;       # initial number of indents
-
-my $p;
 # this should probably be an external file
 my $grammar = <<'END_OF_GRAMMAR';
 <autotree>
@@ -132,41 +128,51 @@ constraint:            id
 END_OF_GRAMMAR
 ; # I just can't leave the semicolon out
 
-$p = Parse::RecDescent->new($grammar);
-my $tree;
+# do we need one of these per file, or just one?
+my $parser;
+$parser = Parse::RecDescent->new($grammar);
+
+sub parse_file{
+  my ($file) = @_;
+  my $t;
+  my $f = IO::File->new($file)
+    or die qq{Failed opening '$file': $?\n};
+  unless ( $t = $parser->cfengine(
+    # delete comments, then only return non-whitespace lines
+    join( q{}, 
+          grep( /\S/, map {s/#.*$//;$_;} $f->getlines )
+    )
+  ) ){
+    die qq{Failed parsing.\n};
+  }
+
+  #if (my $t = $parser->cfengine( q!
+  #    bundle agent kapow { type: "a" b=>c;
+  #                               x:: "c" d=>e, f=>g;
+  #                               "y" -> "k" ff=>gg;
+  #                         othertype: "x" y=>z;}
+  #    body common second  { c => d; d => c; }
+  #    body common turd  { type:: g => f;
+  #                        \!type:: g => fff; }
+  #    !)
+  #) {
+
+  ## we really don't need this...
+  #if( $t ){
+  #  print "Ok! ($path)\n";
+  #}
+  #else{
+  #  print "Bad!\n";
+  #  exit 1;
+  #}
+}
+
+my $indent = q{ }x3; # indent sequence (You "can" use tab, but I suggest spaces)
+my $level = 0;       # initial number of indents
+
 my $path = shift
   or die qq{Usage: $0 filename\n};
-my $f = IO::File->new($path)
-  or die qq{Failed opening '$path': $?\n};
-#print join( q{}, grep(/\S/, map {s/#.*$//;$_;} $f->getlines )), "\n";
-#die;
-unless ( $tree = $p->cfengine(
-  # delete comments, then only return non-whitespace lines
-  join( q{}, 
-        grep( /\S/, map {s/#.*$//;$_;} $f->getlines )
-  )
-) ){
-  die qq{Failed parsing.\n};
-}
-
-#if (my $tree = $p->cfengine( q!
-#    bundle agent kapow { type: "a" b=>c;
-#                               x:: "c" d=>e, f=>g;
-#                               "y" -> "k" ff=>gg;
-#                         othertype: "x" y=>z;}
-#    body common second  { c => d; d => c; }
-#    body common turd  { type:: g => f;
-#                        \!type:: g => fff; }
-#    !)
-#) {
-
-if( $tree ){
-  print "Ok! ($path)\n";
-}
-else{
-  print "Bad!\n";
-  exit 1;
-}
+my $tree = parse_file( $path );
 
 use Data::Dumper;
 #  print Dumper $tree->{'block(s)'}, "\n";
