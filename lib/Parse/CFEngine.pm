@@ -23,109 +23,7 @@ our %EXPORT_TAGS = (
 #$::RD_TRACE++;
 
 # this should probably be an external file
-my $grammar = <<'END_OF_GRAMMAR';
-<autotree>
-cfengine:               block(s)
-
-block:                 bundle typeid blockid bundlebody
-                     | bundle typeid blockid usearglist bundlebody
-                     | body typeid blockid bodybody
-                     | body typeid blockid usearglist bodybody
-
-bundle:                'bundle'
-
-body:                  'body'
-
-typeid:                /[a-z]+/
-
-blockid:               /[a-zA-Z0-9_\-]+/
-
-usearglist:            '('
-                       aitem(s? /,/)
-                       ')'
-
-aitem:                 /[a-zA-Z0-9_]+/
-
-bodybody:              '{'
-                       bodyattrib(s)
-                       '}'
-
-bodyattrib:            class(?)
-                       selection(s)
-
-# maybe make this expression a tad smarter
-class:                 /[a-zA-Z0-9_\!&\|\.\(\)]+::/
-
-selection:             id
-                       '=>'
-                       rval
-                       ';'
-
-rval:                  qstring
-                     | list
-                     | usefunction
-                     | nakedvar
-                     | id
-
-id:                    /[a-zA-Z0-9_]+/ # identifier
-qstring:               /"(?:\\"|[^"])*"/ # 0 or more non-" chars or \"
-                     | /'(?:\\'|[^'])*'/
-                     | /`(?:\\`|[^`])*`/
-                    #| /`[^`]*`/ # I forget if backticks can be escaped
-nakedvar:              /\$[({][a-zA-Z0-9_]+[})]/ # $(var) or ${var}
-
-list:                 '{'
-                       litem(s? /,/)
-                      /,?/ # trailing comma was a problem before this
-                      '}'
-
-litem:                 qstring
-                     | nakedvar
-                     | usefunction
-                     | id # is this actually valid?
-
-usefunction:           functionid givearglist(?)
-
-functionid:            id
-                     | nakedvar # I'm not sure about this, either
-
-givearglist:           '('
-                       gaitem(s? /,/)
-                       ')'
-
-gaitem:                qstring
-                     | usefunction
-                     | nakedvar
-                     | id
-
-bundlebody:            '{'
-                       statement(s)
-                       '}'
-
-statement:             category
-                       classpromise(s)
-
-category:              /[a-zA-Z]+:/
-
-classpromise:          class(?)
-                       promise(s)
-
-promise:               promiser
-                       constraint(s? /,/)
-                       ';'
-                     | promiser
-                       '->'
-                       rval
-                       constraint(s? /,/)
-                       ';'
-
-promiser:              qstring
-
-constraint:            id
-                       '=>'
-                       rval
-END_OF_GRAMMAR
-; # I just can't leave the semicolon out
+my $grammar = join(q{}, <DATA>);
 
 # do we need one of these per file, or just one?
 my $parser;
@@ -328,5 +226,108 @@ sub formatsub {
 } #junk
 
 1;
+__DATA__
+<autotree>
+cfengine:               block(s)
+
+block:                 bundle typeid blockid bundlebody
+                     | bundle typeid blockid usearglist bundlebody
+                     | body typeid blockid bodybody
+                     | body typeid blockid usearglist bodybody
+
+bundle:                'bundle'
+
+body:                  'body'
+
+typeid:                /[a-z]+/
+
+blockid:               /[a-zA-Z0-9_\-]+/
+
+usearglist:            '('
+                       aitem(s? /,/)
+                       ')'
+
+aitem:                 /[a-zA-Z0-9_]+/
+
+bodybody:              '{'
+                       bodyattrib(s)
+                       '}'
+
+bodyattrib:            class(?)
+                       selection(s)
+
+# maybe make this expression a tad smarter
+class:                 /[a-zA-Z0-9_\!&\|\.\(\)]+::/
+
+selection:             id
+                       '=>'
+                       rval
+                       ';'
+
+rval:                  qstring
+                     | list
+                     | usefunction
+                     | nakedvar
+                     | id
+
+id:                    /[a-zA-Z0-9_]+/ # identifier
+qstring:               /"(?:\\"|[^"])*"/ # 0 or more non-" chars or \"
+                     | /'(?:\\'|[^'])*'/
+                     | /`(?:\\`|[^`])*`/
+                    #| /`[^`]*`/ # I forget if backticks can be escaped
+nakedvar:              /\$[({][a-zA-Z0-9_]+[})]/ # $(var) or ${var}
+
+list:                 '{'
+                       litem(s? /,/)
+                      /,?/ # trailing comma was a problem before this
+                      '}'
+
+litem:                 qstring
+                     | nakedvar
+                     | usefunction
+                     | id # is this actually valid?
+
+usefunction:           functionid givearglist(?)
+
+functionid:            id
+                     | nakedvar # I'm not sure about this, either
+
+givearglist:           '('
+                       gaitem(s? /,/)
+                       ')'
+
+gaitem:                qstring
+                     | usefunction
+                     | nakedvar
+                     | id
+
+bundlebody:            '{'
+                       statement(s)
+                       '}'
+
+statement:             category
+                       classpromise(s)
+
+category:              /[a-zA-Z]+:/
+
+classpromise:          class(?)
+                       promise(s)
+
+promise:               promiser
+                       constraint(s? /,/)
+                       ';'
+                     | promiser
+                       '->'
+                       rval
+                       constraint(s? /,/)
+                       ';'
+
+promiser:              qstring
+
+constraint:            id
+                       '=>'
+                       rval
+
+
 # vim:sw=2 ts=4 et
 # end Parse::CFEngine
